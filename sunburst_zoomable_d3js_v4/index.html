@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Zoomable sunburst V4</title>
+		<script type="text/javascript" charset="utf8" src="../jQuery/jquery-1.12.4.min.js"></script>
+		<script type="text/javascript" charset="utf8" src="../dataTables/DataTables-1.10.16.min.js"></script>
+		<script src="../d3js/d3.v4.min.js"></script>
+		<link rel="stylesheet" type="text/css" href="../dataTables/DataTables-1.10.16.min.css">
+		<link rel="stylesheet" type="text/css" href="css/sunburst.css"/>
+		</head>
+	<body>
+		<h1></h1>
+		<h2></h2>
+		<h4></h4>
+		<div id="main">
+			<div id="sequence"></div>
+			<div id="chart">
+				<div id="explanation" style="visibility: hidden;">
+					<span id="libelle"></span><br/>
+					<span id="percentage"></span><br/>
+				  du total de ce niveau, soit<br/>
+					<span id="montant"></span>
+				</div>
+			</div>
+		</div>
+		<div id="sidebar">
+			<input type="checkbox" id="togglelegend" name="affichage" value="legende" checked>
+			<label for="togglelegend">Légende</label>
+			<div id="legend" ></div>
+			</br>
+			<input type="checkbox" id="togglearcconso" name="affichageArcConso" value="afficheArcConso">
+			<label for="togglearcconso">Affichage de la consommation</label>
+			<div id="consommation" ></div>
+		</div>
+		<table id="fichierDonnees" class="display" width="100%">
+		     <thead>
+				<tr>
+					<th>Niveau</th>
+					<th>Libellé</th>
+					<th >Ressource</th>
+					<th>Consommation</th>
+					<th>Conso. prévisionnelle</th>
+				</tr>
+			</thead>
+			<tfoot>
+				<tr>
+					<th colspan="2" style="text-align:right">Total :</th>
+					<th></th>
+					<th></th>
+					<th></th>
+				</tr>
+			</tfoot>
+		</table>
+	
+	<script type="text/javascript" src="js/sunburst.js"></script>
+	<script type="text/javascript" src="js/datatables.js"></script>
+	
+	</body>
+</html>
