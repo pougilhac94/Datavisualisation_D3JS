@@ -121,20 +121,8 @@ function affichageSunburst(monfichier) {
 			toggleOpacity("titredatavisualisation", 0);
 			toggleOpacity("sidebar", 0);
 			toggleOpacity("affichageFichierDonnees", 0);
-			var para = document.createElement('p');
-			para.style.backgroundColor = "red";
-			para.style.color = "white";
-			para.style.fontWeight = "fontWeight";
-			para.style.fontSize = "medium";
-			para.textContent = "Contenu incorrect pour l'affichage";
-			preview.appendChild(para);
-			// A récupérer quand preview sera un objet d3
-			/*preview.append('p')
-				.style('background-color', 'red')
-				.style('color', 'white')
-				.style('font-weight', 'fontWeight')
-				.style('font-size', 'medium')
-				.text("Contenu incorrect pour l'affichage");*/
+			preview.text("Contenu incorrect pour l'affichage")
+				.attr('class','alert alert-danger');
 			throw "Fichier JSON incorrect pour D3JS !";
 			} 
 
@@ -242,7 +230,7 @@ function affichageSunburst(monfichier) {
 
 	// SURVOL PAR LA SOURIS
 	function mouseover(d) {
-		totalSizeD = (d.parent)? d.parent.value : totalSize;
+		var totalSizeD = (d.parent)? d.parent.value : totalSize;
 		var libelle = (d.data.libelle)? d.data.libelle : d.data.name;	
 		// Astuce sur les montants pour avoir un séparateur de milliers
 		var montant = formatNumber(d.value).replace(',','.');

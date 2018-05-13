@@ -38,10 +38,7 @@ function affichageDatatables(monfichier) {
 			//if(maDataTables) {maDataTables.destroy();}
 			maDataTables = $('#fichierDonnees').DataTable( {		
 				data: tableau,
-				language: { 
-					//url: "data/French.json"
-					url: monfichier
-					},
+				language: { url: "data/French.json"	},
 				columns: [
 					{ data: "name" },
 					{ data: "libelle" },
@@ -55,6 +52,11 @@ function affichageDatatables(monfichier) {
 				],
 				order: [[ 0, "asc" ]],
 				iDisplayLength: 25,
+				
+				dom: 'Bfrtip',
+				buttons: [
+					'copy', 'csv', 'excel', 'pdf', 'print'
+				],
 				
 				footerCallback: function( row, data, start, end, display ) {
 					var api = this.api(), data;

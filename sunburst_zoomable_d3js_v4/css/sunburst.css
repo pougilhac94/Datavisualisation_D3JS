@@ -18,16 +18,12 @@
 	  width: 100px;
 	}
 
-	#sequence {
-	  width: 600px;
-	  height: 70px;
-	}
 
-	#legend {
+	#legend, #consommation {
 	  padding: 10px 0 0 3px;
 	}
 
-	#sequence text, #legend text {
+	#sequence text, #legend text, #consommation text {
 	  font-weight: 600;
 	  fill: #fff;
 	}

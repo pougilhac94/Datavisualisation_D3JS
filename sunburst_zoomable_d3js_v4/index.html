@@ -3,31 +3,46 @@
 	<head>
 		<meta charset="utf-8">
 		<title>Zoomable sunburst V4</title>
-		<script type="text/javascript" charset="utf8" src="../jQuery/jquery-1.12.4.min.js"></script>
-		<script type="text/javascript" charset="utf8" src="../dataTables/DataTables-1.10.16.min.js"></script>
+		<script src="../jQuery/jquery-1.12.4.min.js"></script>
+		<script src="../bootstrap/js/bootstrap.bundle.min.js"></script>
+		<script src="../dataTables/DataTables-1.10.16.min.js"></script>
 		<script src="../d3js/d3.v4.min.js"></script>
+		<script src="https://cdn.datatables.net/buttons/1.5.1/js/dataTables.buttons.min.js"></script>
+		<script src="https://cdn.datatables.net/buttons/1.5.1/js/buttons.flash.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.32/pdfmake.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.32/vfs_fonts.js"></script>
+		<script src="https://cdn.datatables.net/buttons/1.5.1/js/buttons.html5.min.js"></script>
+		<script src="https://cdn.datatables.net/buttons/1.5.1/js/buttons.print.min.js"></script>
+		<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/dt-1.10.16/datatables.min.css"/>
+		<link rel="stylesheet" type="text/css" href="../bootstrap/css/bootstrap.min.css">
 		<link rel="stylesheet" type="text/css" href="css/uploadfile.css">
 		<link rel="stylesheet" type="text/css" href="../dataTables/DataTables-1.10.16.min.css">
 		<link rel="stylesheet" type="text/css" href="css/sunburst.css"/>
 		</head>
-	<body>
-		<section>
-			<div id='titregeneral'>
+	<body class="container-fluid">
+		<section class="row jumbotron jumbotron-datavis">
+			<div class="col-9 " id='titregeneral'>
 				<h1>Votre navigateur ne supporte pas javascript, la datavisualisation ne pourra pas s'afficher</h1>
 			</div>
-			<div id='formupload'>
+			<div class="col-3 border-dark rounded border-3 border-groove" id='formupload'></div>
+		</section>
+		<section class="row">
+			<div class="col-2 border border-3 border-white" id='col-gauche'></div>
+			<div class="col-8" id='col-centre'>
+				<div class="row container" id="titredatavisualisation"></div>
+				<div class="row">
+					<div class="col-9" id="main">
+						<div id="sequence"></div>
+						<div id="chart"></div>
+						<br>
+					</div>
+					<div class="col-3" id="sidebar"></div>
+				</div>
+				<div class="row border-top border-dark pt-2" id="affichageFichierDonnees"></div>
 			</div>
+			<div class="col-2 border border-3 border-white" id='col-droite'></div>
 		</section>
-		<section id="titredatavisualisation">
-		</section>
-		<div id="main">
-			<div id="sequence"></div>
-			<div id="chart"></div>
-			<br>
-		</div>
-		<div id="sidebar"></div>
-		<br>
-		<div id="affichageFichierDonnees"></div>
 	<script type="text/javascript" src="js/completeHTML.js"></script>		
 	<script type="text/javascript" src="js/uploadfile.js"></script>		
 	<script type="text/javascript" src="js/sunburst.js"></script>

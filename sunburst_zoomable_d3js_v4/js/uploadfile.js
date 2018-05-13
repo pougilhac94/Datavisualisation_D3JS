@@ -1,10 +1,7 @@
 'use strict';
 
-var input = document.querySelector('#fileselect');
-var preview = document.querySelector('.previewfile');
-//var input = d3.select("#fileselect");
-//var preview = d3.select(".previewfile");
-input.style.opacity = 0;
+var input = d3.select("#fileselect");
+var preview = d3.select(".previewfile").select('p');
 
 var fichierATraiter;
 var maDataTables;
@@ -15,11 +12,10 @@ toggleOpacity("titredatavisualisation", 0);
 toggleOpacity("sidebar", 0);
 toggleOpacity("affichageFichierDonnees", 0);
 	
-input.addEventListener('change', function() {
-//input.on('change', function() {
-	fichierATraiter = updateImageDisplay()[0];
-	if(fichierATraiter){
-		var fichierATraiterName = "data/" + fichierATraiter.name;
+input.on('change', function() {
+   fichierATraiter = updateImageDisplay();
+	if(fichierATraiter != '0'){
+		var fichierATraiterName = "data/" + fichierATraiter;
 		affichageSunburst(fichierATraiterName);
 		affichageDatatables(fichierATraiterName);
 		} else 
@@ -33,44 +29,26 @@ input.addEventListener('change', function() {
 
 	// récuépration d'une fonction qui gère une liste de fichiers en entrée (le HTML utilisé ici n'en prend qu'un (pas de multiple)
 function updateImageDisplay() {
-  while(preview.firstChild) {
-    preview.removeChild(preview.firstChild);
+
+  if(!input.node(0) || !input.node(0).files || input.node(0).files.length < 1){
+    return '0';
   }
 
-  var curFiles = input.files;
-  var listeFichierATraiter=[];
-  if(curFiles.length === 0) {
-    var para = document.createElement('p');
-    para.textContent = 'Aucun fichier sélectionné';
-    preview.appendChild(para);
-	return listeFichierATraiter;
+  var fileNode = input.node(0).files[0];
+
+  if(validFileType(fileNode)){
+    preview.text('Fichier accepté')
+      .attr('class','alert alert-success');
+    return fileNode.name;
   } else {
-    var list = document.createElement('ol');
-    preview.appendChild(list);
-    for(var i = 0; i < curFiles.length; i++) {
-      var listItem = document.createElement('li');
-      var para = document.createElement('p');
-      if(validFileType(curFiles[i])) {
-        para.textContent = 'Nom du fichier : ' + curFiles[i].name + ', taille ' + returnFileSize(curFiles[i].size) + '.';
-        var img = document.createElement('img');
-        img.src = window.URL.createObjectURL(curFiles[i]);
-	
-        //listItem.appendChild(img);
-        listItem.appendChild(para);
-		listeFichierATraiter.push(curFiles[0]);
-      } else {
-        para.textContent = 'Le fichier ' + curFiles[i].name + ', de type ' + curFiles[i].type + ' est invalide. Veuillez recommencer. ';
-        listItem.appendChild(para);
-      }
-      list.appendChild(listItem);
-    }
+    preview.text('Type ' + fileNode.type + ' invalide.')
+    .attr('class','alert alert-danger');
+    return '0';
   }
-  return listeFichierATraiter;
+
 }
 
-var fileTypes = [
-  'application/json'
-]
+var fileTypes = [ 'application/json'];
 
 function validFileType(file) {
   for(var i = 0; i < fileTypes.length; i++) {
