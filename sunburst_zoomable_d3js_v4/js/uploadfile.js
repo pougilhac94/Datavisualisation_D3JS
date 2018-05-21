@@ -15,9 +15,10 @@ toggleOpacity("affichageFichierDonnees", 0);
 input.on('change', function() {
    fichierATraiter = updateImageDisplay();
 	if(fichierATraiter != '0'){
-		var fichierATraiterName = "data/" + fichierATraiter;
-		affichageSunburst(fichierATraiterName);
-		affichageDatatables(fichierATraiterName);
+		var fichierATraiterName = 'data/' + fichierATraiter;
+		var fichierEnTeteName = 'data/' + 'entete.csv';
+		affichageSunburst(fichierATraiterName,fichierEnTeteName);
+		affichageDatatables(fichierATraiterName,fichierEnTeteName);
 		} else 
 			{
 			toggleOpacity("main", 0);
@@ -27,7 +28,7 @@ input.on('change', function() {
 			}
 	});
 
-	// récuépration d'une fonction qui gère une liste de fichiers en entrée (le HTML utilisé ici n'en prend qu'un (pas de multiple)
+	// récupération d'une fonction qui gère une liste de fichiers en entrée (le HTML utilisé ici n'en prend qu'un (pas de multiple)
 function updateImageDisplay() {
 
   if(!input.node(0) || !input.node(0).files || input.node(0).files.length < 1){
@@ -48,7 +49,7 @@ function updateImageDisplay() {
 
 }
 
-var fileTypes = [ 'application/json'];
+var fileTypes = [ 'application/json', 'application/csv'];
 
 function validFileType(file) {
   for(var i = 0; i < fileTypes.length; i++) {

@@ -1,5 +1,5 @@
 // FONCTION affichageDatatables appelée par le script UPLOAD.JS qui passe en paramètre le nomdu fichier
-function affichageDatatables(monfichier) {
+function affichageDatatables(monfichier, monentete) {
 	'use strict';
 	// Affichage 
 	toggleOpacity("affichageFichierDonnees", 1);
@@ -11,97 +11,158 @@ function affichageDatatables(monfichier) {
 	//document.getElementById("affichageFichierDonnees").html(codeHTMLtable);
 
 	var formatNumber = d3.format(",d");
-	//d3.json(fichierJSON, function(error, data) {
-	d3.json(monfichier, function(error, data) {
-		if (error) throw error;
-		
-				// Si le fichier JSON est incorrect (pas d'enfants a minima) arrêt total
-		if (!d3.hierarchy(data).leaves()[0].data.name) {
-			toggleOpacity("main", 0);
-			toggleOpacity("titredatavisualisation", 0);
-			toggleOpacity("sidebar", 0);
-			toggleOpacity("affichageFichierDonnees", 0);
-			throw "Fichier JSON incorrect pour Datatables !";
-			} 
-		
-		var leaves = d3.hierarchy(data).leaves();
 
-		var tableau = [];
-		for(var i=0; i<leaves.length; i++) {
-			leaves[i].data.name = leaves[i].data.name.split(' ').pop();
-			if(!leaves[i].data.conso)leaves[i].data.conso=0;
-			if(!leaves[i].data.prev)leaves[i].data.prev=0;
-			tableau.push(leaves[i].data);
-		}
-		
-		$(document).ready(function() {
-			//if(maDataTables) {maDataTables.destroy();}
-			maDataTables = $('#fichierDonnees').DataTable( {		
-				data: tableau,
-				language: { url: "data/French.json"	},
-				columns: [
-					{ data: "name" },
-					{ data: "libelle" },
-					{ data: "size"},
-					{ data: "conso" },
-					{ data: "prev" }
-				],
-				columnDefs: [
-					{ "render": $.fn.dataTable.render.number('.',',',0,''), "targets": [2,3,4]},
-					{className: "dt-right", "targets": [2,3,4]}
-				],
-				order: [[ 0, "asc" ]],
-				iDisplayLength: 25,
-				
-				dom: 'Bfrtip',
-				buttons: [
-					'copy', 'csv', 'excel', 'pdf', 'print'
-				],
-				
-				footerCallback: function( row, data, start, end, display ) {
-					var api = this.api(), data;
-					var total2 = api
-						.column(2, { search: "applied"} )
-						.data()
-						.reduce( function (a, b) {
-							return a + b;
-						}, 0);
-					var total3 = api
-						.column(3, { search: "applied"} )
-						.data()
-						.reduce( function (a, b) {
-							return a + b;
-						}, 0);
-					var total4 = api
-						.column(4, { search: "applied"} )
-						.data()
-						.reduce( function (a, b) {
-							return a + b;
-						}, 0);
-					var pageTotal2 = api
-						.column(2, { page: "current"} )
-						.data()
-						.reduce( function (a, b) {
-							return a + b;
-						}, 0);
-					var pageTotal3 = api
-						.column(3, { page: "current"} )
-						.data()
-						.reduce( function (a, b) {
-							return a + b;
-						}, 0);
-					var pageTotal4 = api
-						.column(4, { page: "current"} )
-						.data()
-						.reduce( function (a, b) {
-							return a + b;
-						}, 0);
-					$( api.column(2).footer() ).html(formatNumber(total2).replace(',','.'));
-					$( api.column(3).footer() ).html(formatNumber(total3).replace(',','.'));
-					$( api.column(4).footer() ).html(formatNumber(total4).replace(',','.'));
-				},
-			} );
-		} );
+	//--------------------------------------------------------------------------------------
+	var fichierJSON = monfichier
+	var root = {};
+	var enteteCSV = monentete;
+	var objectNiv1 = {};		
+
+	d3.csv(enteteCSV, function(error, data) {
+		var objectHeader = {};
+		var objectCSVint = {};
+		data.forEach(function(d, i) {
+			objectHeader[i] = d;
+			});
+		objectHeader[0].children = new Array();
+		objectNiv1 = objectHeader[0];
 	});
+
+	d3.csv(fichierJSON, function(error, data) {
+		var nodeById = {};
+		var ind1 = 0;
+		var ind2 = 0;
+		var ind3 = 0;
+
+	// Index the nodes by id, in case they come out of order.
+		data.forEach(function(d, i) {
+			nodeById[i] = d;
+		});
+
+		// Lazily compute children.
+		data.forEach(function(d, i) {
+			if (!d.niv2) {
+				objectNiv1.children[ind1] = nodeById[i];
+				ind2 = 0;
+				ind3 = 0;
+				++ind1;
+			}
+		 
+			if (d.niv2 && !d.niv3) {
+			
+				if (objectNiv1.children[ind1 - 1].children) {
+					objectNiv1.children[ind1 - 1].children.push(d);
+					ind3 = 0;
+					++ind2;
+					}
+				else {
+					objectNiv1.children[ind1 - 1].children = [d];
+					ind3 = 0;
+					++ind2;
+				}
+			}
+			
+			if (d.niv3 && !d.niv4) {
+				if (objectNiv1.children[ind1 - 1].children[ind2 - 1].children) {
+					objectNiv1.children[ind1 - 1].children[ind2 - 1].children.push(d);
+					++ind3;
+					}
+				else {
+					objectNiv1.children[ind1 - 1].children[ind2 - 1].children = [d];
+					++ind3;
+				}
+			}
+			
+		});
+		
+	root = d3.hierarchy(objectNiv1);
+	
+	if (!root.leaves()[0].data.name) {
+		toggleOpacity("main", 0);
+		toggleOpacity("titredatavisualisation", 0);
+		toggleOpacity("sidebar", 0);
+		toggleOpacity("affichageFichierDonnees", 0);
+		throw "Fichier CSV incorrect pour Datatables !";
+		} 
+	
+	var leaves = root.leaves();
+	var tableau = [];
+	for(var i=0; i<leaves.length; i++) {
+		leaves[i].data.name = leaves[i].data.name.split(' ').pop();
+		if(!leaves[i].data.conso)leaves[i].data.conso=0;
+		if(!leaves[i].data.prev)leaves[i].data.prev=0;
+		tableau.push(leaves[i].data);
+	}
+	
+	$(document).ready(function() {
+		//if(maDataTables) {maDataTables.destroy();}
+		maDataTables = $('#fichierDonnees').DataTable( {	
+			data: tableau,
+			language: { url: "data/French.json"	},
+			columns: [
+				{ data: "name" },
+				{ data: "libelle" },
+				{ data: "size"},
+				{ data: "conso" },
+				{ data: "prev" }
+			],
+			columnDefs: [
+				{ "render": $.fn.dataTable.render.number('.',',',0,''), "targets": [2,3,4]},
+				{className: "dt-right", "targets": [2,3,4]}
+			],
+			order: [[ 0, "asc" ]],
+			iDisplayLength: 25,
+			
+			dom: 'Bfrtip',
+			buttons: [
+				'copy', 'csv', 'excel', 'pdf', 'print'
+			],
+			
+			footerCallback: function( row, data, start, end, display ) {
+				var api = this.api(), data;
+				var total2 = api
+					.column(2, { search: "applied"} )
+					.data()
+					.reduce( function (a, b) {
+						return a*1 + b*1;
+					}, 0);
+				var total3 = api
+					.column(3, { search: "applied"} )
+					.data()
+					.reduce( function (a, b) {
+						return a*1 + b*1;
+					}, 0);
+				var total4 = api
+					.column(4, { search: "applied"} )
+					.data()
+					.reduce( function (a, b) {
+						return a*1 + b*1;
+					}, 0);
+				var pageTotal2 = api
+					.column(2, { page: "current"} )
+					.data()
+					.reduce( function (a, b) {
+						return a*1 + b*1;
+					}, 0);
+				var pageTotal3 = api
+					.column(3, { page: "current"} )
+					.data()
+					.reduce( function (a, b) {
+						return a*1 + b*1;
+					}, 0);
+				var pageTotal4 = api
+					.column(4, { page: "current"} )
+					.data()
+					.reduce( function (a, b) {
+						return a*1 + b*1;
+					}, 0);
+				$( api.column(2).footer() ).html(formatNumber(total2).replace(',','.'));
+				$( api.column(3).footer() ).html(formatNumber(total3).replace(',','.'));
+				$( api.column(4).footer() ).html(formatNumber(total4).replace(',','.'));
+			}
+		} );
+	} );
+
+	})
 
 }

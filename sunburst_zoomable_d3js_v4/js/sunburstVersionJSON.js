@@ -1,5 +1,5 @@
 // FONCTION affichageSunburst appelée par le script UPLOAD.JS qui passe en paramètre le nomdu fichier
-function affichageSunburst(monfichier, monentete) {
+function affichageSunburst(monfichier) {
 
 	'use strict';
 
@@ -104,16 +104,102 @@ function affichageSunburst(monfichier, monentete) {
 
 	// Initialisation du non affichage des données
 	if(!toggledonnees.checked)
-		{d3.select("#affichageFichierDonnees").style("visibility", "hidden");}	
+		{d3.select("#affichageFichierDonnees").style("visibility", "hidden");}
+	
 	
 	var fichierJSON = monfichier
 	var root = {};
-	// fichierJSON est un CSV,il faut le transformer en JSON
-	var enteteCSV = monentete;
-	var objectNiv1 = {};		
-	csvHierarchy();
+	
+	// Lecture du fichier JSON et construction du SUNBURST --------------------------
 
+	d3.json(fichierJSON, function(error, data) {
+		if (error) throw error;		
+		// Variable ROOT correspond à la hiérachie
+		root = d3.hierarchy(data);
 		
+		// Si le fichier JSON est incorrect (pas d'enfants a minima) arrêt total
+		if (!root.children) {
+			toggleOpacity("main", 0);
+			toggleOpacity("titredatavisualisation", 0);
+			toggleOpacity("sidebar", 0);
+			toggleOpacity("affichageFichierDonnees", 0);
+			preview.text("Contenu incorrect pour l'affichage")
+				.attr('class','alert alert-danger');
+			throw "Fichier JSON incorrect pour D3JS !";
+			} 
+
+		// Balayage de ROOT pour constituer les tableaux des programmes et des hiérarchies (4 maxi)
+		for(var i=0; i < root.children.length; ++i){
+			tableauPGM[i] = root.children[i].data.name.split(' ').pop();
+			switch(root.children[i].height) {
+				case 4:
+					tableauNiveau[4] = root.children[i].children[0].children[0].children[0].children[0].data.name.split(' ').shift();				
+				case 3:
+					tableauNiveau[3] = root.children[i].children[0].children[0].children[0].data.name.split(' ').shift();				
+				case 2:
+					tableauNiveau[2] = root.children[i].children[0].children[0].data.name.split(' ').shift();		
+				case 1:
+					tableauNiveau[1] = root.children[i].children[0].data.name.split(' ').shift();
+				case 0:	
+					tableauNiveau[0] = root.children[i].data.name.split(' ').shift();			
+					break;
+			}
+		}
+		// Les tableaux étant initialisés, les légendes peuvent être affichées
+		toggleOpacity("sidebar", 1);
+		drawLegend();
+		drawConsommation();
+		
+		// Affichage de l'en-tête
+		var titreDataVisualisation = d3.select('#titredatavisualisation');
+		titreDataVisualisation.select('h1').text(data.name);
+		var espace = " ";
+		titreDataVisualisation.select('h2').text(
+			"Répartition de la ressource"
+			+ espace + data.type 
+			+ espace + data.annee
+			+ espace + "en" + espace + data.categorie
+			+ espace + "par" + espace + tableauNiveau );
+		titreDataVisualisation.select('h4').text( "Source :"
+			+ espace + data.source
+			+ espace + "produit le" + espace + data.dateProduction);
+		
+		root.sum(function(d) { return d.size; });
+		totalSize = (partition(root).descendants()[0].value);
+		
+		// Affichage des arcs proportionnels à la ressource (id = ressource)
+		var sunburstBase = svg.selectAll("#ressource")
+			.data(partition(root).descendants())
+			.enter();		
+		sunburstBase.append("path")
+			.attr("id", "ressource")
+			.attr("d", arc0)
+			//.style("fill", function(d) { return color((d.children ? d : d.parent).data.name); })
+			.style("fill", fillColor)
+			.style("opacity", 1)
+			.on("mouseover", mouseover)
+			.on("click", click)
+		;	
+		// Affichage des arcs proportionnels à la prévision de consommation (id = prev)
+		sunburstBase.append("path")
+			.attr("id", "prev")
+			.attr("d", arc1)
+			.style("fill", fillColorWarning)
+			.style("visibility", "hidden")
+			.style("opacity", 1)
+			.on("click", click)
+		;
+		// Affichage des arcs proportionnels à la consommation (id = conso)
+		sunburstBase.append("path")
+			.attr("id", "conso")
+			.attr("d", arc2)
+			.style("fill", fillColorConso)
+			.style("visibility", "hidden")
+			.style("opacity", 1)
+			.on("click", click)
+		;
+	});
+
 	// Add the mouseleave handler to the bounding circle.
 	d3.select("#container").on("mouseleave", mouseleave);
 
@@ -306,9 +392,9 @@ function affichageSunburst(monfichier, monentete) {
 		// SI l'affichage de la consommation a été demandée
 		if(togglearcconso.checked){
 			// Complément sur la première ligne de commentaire (consommation)
-			texte1 += (conso && !isNaN(conso))? (', une consommation de '+ conso + ' M€') : ('');
+			texte1 += (conso && !isNaN(conso))? (', et une consommation de '+ conso + ' M€') : ('');
 			// Préparation de la seconde ligne de commentaire (consommation prévisionnelle)
-			texte2 = (prevSuppl && !isNaN(prevSuppl))?('Un supplément prévu de '+ prevSuppl + ' M€') : ('');
+			texte2 = (prevSuppl && !isNaN(prevSuppl))?('La consommation supplémentaire prévisionnelle est de '+ prevSuppl + ' M€') : ('');
 			texte2 +=(prev && !isNaN(prev))?('. La cible est de '+ prev + ' M€') : ('');
 			// Préparation de la troisième ligne de commentaire (ccible)
 			texte3 = (ecart && !isNaN(ecart) && ecart > 0)?('Ressource manquante : '+ ecart + ' M€') : ('');
@@ -473,158 +559,6 @@ function affichageSunburst(monfichier, monentete) {
 			selectId.style("visibility", "hidden");
 		}
 	}
-
-	// FONCTION chargement dans l'objet ROOT de la hiérarchie du CSV
-	function csvHierarchy() {
-
-		d3.csv(enteteCSV, function(error, data) {
-			var objectHeader = {};
-			var objectCSVint = {};
-			data.forEach(function(d, i) {
-				objectHeader[i] = d;
-				});
-			objectHeader[0].children = new Array();
-			objectNiv1 = objectHeader[0];
-		});
-
-		d3.csv(fichierJSON, function(error, data) {
-			var nodeById = {};
-			var ind1 = 0;
-			var ind2 = 0;
-			var ind3 = 0;
-
-		// Index the nodes by id, in case they come out of order.
-			data.forEach(function(d, i) {
-				nodeById[i] = d;
-			});
-
-			// Lazily compute children.
-			data.forEach(function(d, i) {
-				if (!d.niv2) {
-					objectNiv1.children[ind1] = nodeById[i];
-					ind2 = 0;
-					ind3 = 0;
-					++ind1;
-				}
-			 
-				if (d.niv2 && !d.niv3) {
-				
-					if (objectNiv1.children[ind1 - 1].children) {
-						objectNiv1.children[ind1 - 1].children.push(d);
-						ind3 = 0;
-						++ind2;
-						}
-					else {
-						objectNiv1.children[ind1 - 1].children = [d];
-						ind3 = 0;
-						++ind2;
-					}
-				}
-				
-				if (d.niv3 && !d.niv4) {
-					if (objectNiv1.children[ind1 - 1].children[ind2 - 1].children) {
-						objectNiv1.children[ind1 - 1].children[ind2 - 1].children.push(d);
-						++ind3;
-						}
-					else {
-						objectNiv1.children[ind1 - 1].children[ind2 - 1].children = [d];
-						++ind3;
-					}
-				}
-				
-			});
-			
-		root = d3.hierarchy(objectNiv1);
-		// Si le fichier JSON est incorrect (pas d'enfants a minima) arrêt total
-		if (!root.children) {
-			toggleOpacity("main", 0);
-			toggleOpacity("titredatavisualisation", 0);
-			toggleOpacity("sidebar", 0);
-			toggleOpacity("affichageFichierDonnees", 0);
-			preview.text("Contenu incorrect pour l'affichage")
-				.attr('class','alert alert-danger');
-			throw "Fichier JSON incorrect pour D3JS !";
-			} 
-
-		// Balayage de ROOT pour constituer les tableaux des programmes et des hiérarchies (4 maxi)
-		for(var i=0; i < root.children.length; ++i){
-			tableauPGM[i] = root.children[i].data.name.split(' ').pop();
-			//console.log("i = " + i + " - "+root.children[i].height);
-			switch(root.children[i].height) {
-				case 4:
-					tableauNiveau[4] = root.children[i].children[0].children[0].children[0].children[0].data.name.split(' ').shift();				
-				case 3:
-					tableauNiveau[3] = root.children[i].children[0].children[0].children[0].data.name.split(' ').shift();				
-				case 2:
-					tableauNiveau[2] = root.children[i].children[0].children[0].data.name.split(' ').shift();		
-				case 1:
-					tableauNiveau[1] = root.children[i].children[0].data.name.split(' ').shift();
-				case 0:	
-					tableauNiveau[0] = root.children[i].data.name.split(' ').shift();			
-					break;
-			}
-		}
-		
-		// Les tableaux étant initialisés, les légendes peuvent être affichées
-		toggleOpacity("sidebar", 1);
-		drawLegend();
-		drawConsommation();
-		
-		// Affichage de l'en-tête
-		var titreDataVisualisation = d3.select('#titredatavisualisation');
-		titreDataVisualisation.select('h1').text(root.data.name);
-		var espace = " ";
-		titreDataVisualisation.select('h2').text(
-			"Répartition de la ressource"
-			+ espace + root.data.type 
-			+ espace + root.data.annee
-			+ espace + "en" + espace + root.data.categorie
-			+ espace + "par" + espace + tableauNiveau );
-		titreDataVisualisation.select('h4').text( "Source :"
-			+ espace + root.data.source
-			+ espace + "produit le" + espace + root.data.dateProduction);
-		
-		root.sum(function(d) { return d.size; });
-		totalSize = (partition(root).descendants()[0].value);
-		
-		
-		
-		// Affichage des arcs proportionnels à la ressource (id = ressource)
-		var sunburstBase = svg.selectAll("#ressource")
-			.data(partition(root).descendants())
-			.enter();	
-			
-		sunburstBase.append("path")
-			.attr("id", "ressource")
-			.attr("d", arc0)
-			//.style("fill", function(d) { return color((d.children ? d : d.parent).data.name); })
-			.style("fill", fillColor)
-			.style("opacity", 1)
-			.on("mouseover", mouseover)
-			.on("click", click)
-		;	
-		// Affichage des arcs proportionnels à la prévision de consommation (id = prev)
-		sunburstBase.append("path")
-			.attr("id", "prev")
-			.attr("d", arc1)
-			.style("fill", fillColorWarning)
-			.style("visibility", "hidden")
-			.style("opacity", 1)
-			.on("click", click)
-		;
-		// Affichage des arcs proportionnels à la consommation (id = conso)
-		sunburstBase.append("path")
-			.attr("id", "conso")
-			.attr("d", arc2)
-			.style("fill", fillColorConso)
-			.style("visibility", "hidden")
-			.style("opacity", 1)
-			.on("click", click)
-		;
-		})
-	}
-	
-	
 	
 	//----------------------------------------------------------------------------------
 	d3.select(self.frameElement).style("height", height + "px");
